@@ -9,9 +9,9 @@ fn main() {
 
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
-        "eframe template",
+        "server cruncher",
         native_options,
-        Box::new(|cc| Box::new(eframe_template::TemplateApp::new(cc))),
+        Box::new(|cc| Box::new(server_cruncher::ServerCruncherApp::new(cc))),
     );
 }
 
@@ -28,7 +28,7 @@ fn main() {
     eframe::start_web(
         "the_canvas_id", // hardcode it
         web_options,
-        Box::new(|cc| Box::new(eframe_template::TemplateApp::new(cc))),
+        Box::new(|cc| Box::new(server_cruncher::ServerCruncherApp::new(cc))),
     )
     .expect("failed to start eframe");
 }
