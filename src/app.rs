@@ -1,16 +1,20 @@
 use crate::utils::Data;
+use hcloud::models::server::Server;
 use std::sync::mpsc::{Receiver, Sender};
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct ServerCruncherApp {
     #[serde(skip)]
-    tx: Sender<Data>, //TODO: Replace type with data enum
+    tx: Sender<Data>,
     #[serde(skip)]
     rx: Receiver<Data>,
 
     // Example stuff:
     label: String,
+
+    #[serde(skip)] // FIXME: During dev only
+    server_list: Option<Vec<Server>>,
 
     // this how you opt-out of serialization of a member
     #[serde(skip)]
@@ -24,6 +28,7 @@ impl Default for ServerCruncherApp {
         Self {
             tx,
             rx,
+            server_list: None,
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
@@ -59,6 +64,7 @@ impl eframe::App for ServerCruncherApp {
         let Self {
             tx,
             rx,
+            server_list,
             label,
             value,
         } = self;
@@ -89,8 +95,12 @@ impl eframe::App for ServerCruncherApp {
             });
 
             ui.add(egui::Slider::new(value, 0.0..=10.0).text("value"));
-            if ui.button("Increment").clicked() {
-                *value += 1.0;
+            if ui.button("Request Server List").clicked() {
+                req_server_list(self.tx.clone(), ctx.clone())
+            }
+
+            if let Ok(Data::Servers(servers)) = self.rx.try_recv() {
+                self.server_list = Some(servers);
             }
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
@@ -117,6 +127,13 @@ impl eframe::App for ServerCruncherApp {
                 "https://github.com/emilk/eframe_template/blob/master/",
                 "Source code."
             ));
+
+            if let Some(servers) = &self.server_list {
+                for server in servers {
+                    ui.label(format!("{:?}", server));
+                }
+            }
+
             egui::warn_if_debug_build(ui);
         });
 
@@ -129,4 +146,24 @@ impl eframe::App for ServerCruncherApp {
             });
         }
     }
+}
+
+fn req_server_list(tx: Sender<Data>, ctx: egui::Context) {
+    use hcloud::apis::configuration::Configuration;
+    use hcloud::apis::servers_api;
+    use std::env;
+
+    tokio::spawn(async move {
+        let mut configuration = Configuration::new();
+        configuration.bearer_access_token =
+            Some(env::var("HCLOUD_API_TOKEN").expect("No HCLOUD_API_TOKEN found"));
+
+        let servers = servers_api::list_servers(&configuration, Default::default())
+            .await
+            .expect("Unable to fetch Server list")
+            .servers;
+
+        let _ = tx.send(Data::Servers(servers));
+        ctx.request_repaint();
+    });
 }
