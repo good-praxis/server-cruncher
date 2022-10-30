@@ -36,22 +36,6 @@ fn main() {
 // when compiling to web using trunk.
 #[cfg(target_arch = "wasm32")]
 fn main() {
-    use std::time::Duration;
-
-    let rt = Runtime::new().expect("Unable to create Runtime");
-
-    let _enter = rt.enter();
-
-    // Execute the runtime in its own thread.
-    // The future doesn't have to do anything. In this example, it just sleeps forever.
-    std::thread::spawn(move || {
-        rt.block_on(async {
-            loop {
-                tokio::time::sleep(Duration::from_secs(3600)).await;
-            }
-        })
-    });
-
     // Make sure panics are logged using `console.error`.
     console_error_panic_hook::set_once();
 
