@@ -118,7 +118,6 @@ impl eframe::App for ServerCruncherApp {
             if let Some(servers) = &self.server_list {
                 for server in servers {
                     egui::Window::new(server.name.as_str()).show(ctx, |ui| {
-                        ui.heading(server.name.as_str());
                         ui.label(format!(
                             "IP: {}",
                             server.public_net.ipv4.as_ref().unwrap().ip.as_str()
