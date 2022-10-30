@@ -61,13 +61,7 @@ impl eframe::App for ServerCruncherApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self {
-            tx,
-            rx,
-            server_list,
-            label,
-            value,
-        } = self;
+        let Self { label, value, .. } = self;
 
         // Examples of how to create different panels and windows.
         // Pick whichever suits you.
@@ -121,30 +115,26 @@ impl eframe::App for ServerCruncherApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
 
-            ui.heading("Server Cruncher");
-            ui.hyperlink("https://github.com/emilk/eframe_template");
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/eframe_template/blob/master/",
-                "Source code."
-            ));
-
             if let Some(servers) = &self.server_list {
                 for server in servers {
-                    ui.label(format!("{:?}", server));
+                    egui::Window::new(server.name.as_str()).show(ctx, |ui| {
+                        ui.heading(server.name.as_str());
+                        ui.label(format!(
+                            "IP: {}",
+                            server.public_net.ipv4.as_ref().unwrap().ip.as_str()
+                        ));
+                        ui.label(format!(
+                            "Datacenter: {}",
+                            server.datacenter.description.as_str()
+                        ));
+                        ui.label(format!("Status: {:?}", server.status));
+                        ui.collapsing("details", |ui| ui.label(format!("{:?}", server)));
+                    });
                 }
             }
 
             egui::warn_if_debug_build(ui);
         });
-
-        if false {
-            egui::Window::new("Window").show(ctx, |ui| {
-                ui.label("Windows can be moved by dragging them.");
-                ui.label("They are automatically sized based on contents.");
-                ui.label("You can turn on resizing and scrolling if you like.");
-                ui.label("You would normally chose either panels OR windows.");
-            });
-        }
     }
 }
 
