@@ -1,4 +1,5 @@
 use crate::utils::Data;
+use chrono::{prelude::*, serde::ts_seconds_option};
 use hcloud::models::server::Server;
 use std::sync::mpsc::{Receiver, Sender};
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -15,6 +16,9 @@ pub struct ServerCruncherApp {
 
     #[serde(skip)] // FIXME: During dev only
     server_list: Option<Vec<Server>>,
+    //#[serde(with = "ts_seconds_option")]
+    #[serde(skip)]
+    server_list_updated: Option<DateTime<Utc>>,
 
     // this how you opt-out of serialization of a member
     #[serde(skip)]
@@ -29,6 +33,7 @@ impl Default for ServerCruncherApp {
             tx,
             rx,
             server_list: None,
+            server_list_updated: None,
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
@@ -93,8 +98,36 @@ impl eframe::App for ServerCruncherApp {
                 req_server_list(self.tx.clone(), ctx.clone())
             }
 
+            const THIRTY_SECONDS_MILLIS: i64 = 30000;
+            let last_updated = match self.server_list_updated {
+                None => "Never".to_string(),
+                Some(time)
+                    if Utc::now().timestamp_millis() - time.timestamp_millis()
+                        > THIRTY_SECONDS_MILLIS =>
+                {
+                    // TODO: This could be extracted with the timestamp itself into a data struct; => Less cpu load since
+                    const HOUR: i64 = 3600000;
+                    const MINUTE: i64 = 60000;
+                    const SECOND: i64 = 1000;
+                    let mut duration = Utc::now().timestamp_millis() - time.timestamp_millis();
+                    let h = duration / HOUR;
+                    duration = duration % HOUR;
+
+                    let m = duration / MINUTE;
+                    duration = duration % MINUTE;
+
+                    let s = duration / SECOND;
+
+                    format!("{}h {}m {}s ago", h, m, s) //FIXME: Request redraw?
+                }
+                Some(_time) => "Just now".to_string(),
+            };
+
+            ui.label(format!("Last updated: {}", last_updated));
+
             if let Ok(Data::Servers(servers)) = self.rx.try_recv() {
                 self.server_list = Some(servers);
+                self.server_list_updated = Some(Utc::now());
             }
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
