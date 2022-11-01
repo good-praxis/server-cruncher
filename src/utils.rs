@@ -36,10 +36,10 @@ impl RemoteData {
         let mut diff = Utc::now().timestamp_millis() - self.updated_at.timestamp_millis();
 
         self.hours_since = Some(diff / HOUR);
-        diff = diff % HOUR;
+        diff %= HOUR;
 
         self.minutes_since = Some(diff / MINUTE);
-        diff = diff % MINUTE;
+        diff %= MINUTE;
 
         self.seconds_since = Some(diff / SECOND);
 
