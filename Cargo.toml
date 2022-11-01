@@ -15,7 +15,7 @@ serde = { version = "1", features = [
     "derive",
 ] } # You only need this if you want app persistence
 tokio = { version = "1", features = ["full"] }
-hcloud = "0.13"
+hcloud = "0.13" # TODO: Remove for wasm compatible alternative
 chrono = { version = "0.4", features = ["serde"] }
 
 # native:

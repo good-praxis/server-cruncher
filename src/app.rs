@@ -1,5 +1,5 @@
 use crate::utils::Data;
-use chrono::{prelude::*, serde::ts_seconds_option};
+use chrono::prelude::*;
 use hcloud::models::server::Server;
 use std::sync::mpsc::{Receiver, Sender};
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -11,18 +11,11 @@ pub struct ServerCruncherApp {
     #[serde(skip)]
     rx: Receiver<Data>,
 
-    // Example stuff:
-    label: String,
-
     #[serde(skip)] // FIXME: During dev only
     server_list: Option<Vec<Server>>,
     //#[serde(with = "ts_seconds_option")]
     #[serde(skip)]
     server_list_updated: Option<DateTime<Utc>>,
-
-    // this how you opt-out of serialization of a member
-    #[serde(skip)]
-    value: f32,
 }
 
 impl Default for ServerCruncherApp {
@@ -34,9 +27,6 @@ impl Default for ServerCruncherApp {
             rx,
             server_list: None,
             server_list_updated: None,
-            // Example stuff:
-            label: "Hello World!".to_owned(),
-            value: 2.7,
         }
     }
 }
@@ -66,8 +56,6 @@ impl eframe::App for ServerCruncherApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self { label, value, .. } = self;
-
         // Examples of how to create different panels and windows.
         // Pick whichever suits you.
         // Tip: a good default choice is to just keep the `CentralPanel`.
@@ -88,12 +76,6 @@ impl eframe::App for ServerCruncherApp {
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
             ui.heading("Side Panel");
 
-            ui.horizontal(|ui| {
-                ui.label("Write something: ");
-                ui.text_edit_singleline(label);
-            });
-
-            ui.add(egui::Slider::new(value, 0.0..=10.0).text("value"));
             if ui.button("Request Server List").clicked() {
                 req_server_list(self.tx.clone(), ctx.clone())
             }
@@ -105,7 +87,7 @@ impl eframe::App for ServerCruncherApp {
                     if Utc::now().timestamp_millis() - time.timestamp_millis()
                         > THIRTY_SECONDS_MILLIS =>
                 {
-                    // TODO: This could be extracted with the timestamp itself into a data struct; => Less cpu load since
+                    // TODO: This could be extracted with the timestamp itself into a data struct; => Less cpu load
                     const HOUR: i64 = 3600000;
                     const MINUTE: i64 = 60000;
                     const SECOND: i64 = 1000;
@@ -129,20 +111,6 @@ impl eframe::App for ServerCruncherApp {
                 self.server_list = Some(servers);
                 self.server_list_updated = Some(Utc::now());
             }
-
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 0.0;
-                    ui.label("powered by ");
-                    ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-                    ui.label(" and ");
-                    ui.hyperlink_to(
-                        "eframe",
-                        "https://github.com/emilk/egui/tree/master/crates/eframe",
-                    );
-                    ui.label(".");
-                });
-            });
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -175,14 +143,14 @@ fn req_server_list(tx: Sender<Data>, ctx: egui::Context) {
     use hcloud::apis::servers_api;
     use std::env;
 
+    let api_key = env::var("HCLOUD_API_TOKEN").expect("No HCLOUD_API_TOKEN found");
     tokio::spawn(async move {
         let mut configuration = Configuration::new();
-        configuration.bearer_access_token =
-            Some(env::var("HCLOUD_API_TOKEN").expect("No HCLOUD_API_TOKEN found"));
+        configuration.bearer_access_token = Some(api_key);
 
         let servers = servers_api::list_servers(&configuration, Default::default())
             .await
-            .expect("Unable to fetch Server list")
+            .expect("Unable to fetch Server list") // TODO: Propogade error to UI
             .servers;
 
         let _ = tx.send(Data::Servers(servers));
