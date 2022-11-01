@@ -1,6 +1,7 @@
 use crate::utils::Data;
 use chrono::prelude::*;
 use hcloud::models::server::Server;
+use lazy_static::lazy_static;
 use std::sync::mpsc::{Receiver, Sender};
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -143,12 +144,20 @@ fn req_server_list(tx: Sender<Data>, ctx: egui::Context) {
     use hcloud::apis::servers_api;
     use std::env;
 
-    let api_key = env::var("HCLOUD_API_TOKEN").expect("No HCLOUD_API_TOKEN found");
+    lazy_static! {
+        static ref HCLOUD_API_TOKEN: String =
+            env::var("HCLOUD_API_TOKEN").expect("No HCLOUD_API_TOKEN found");
+    }
     tokio::spawn(async move {
-        let mut configuration = Configuration::new();
-        configuration.bearer_access_token = Some(api_key);
+        lazy_static! {
+            static ref CONFIGURATION: Configuration = {
+                let mut configuration = Configuration::new();
+                configuration.bearer_access_token = Some(HCLOUD_API_TOKEN.clone());
+                configuration
+            };
+        }
 
-        let servers = servers_api::list_servers(&configuration, Default::default())
+        let servers = servers_api::list_servers(&CONFIGURATION, Default::default())
             .await
             .expect("Unable to fetch Server list") // TODO: Propogade error to UI
             .servers;

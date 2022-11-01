@@ -1873,6 +1873,7 @@ dependencies = [
  "eframe",
  "egui",
  "hcloud",
+ "lazy_static",
  "serde",
  "tokio",
  "tracing-subscriber",
