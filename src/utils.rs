@@ -55,19 +55,19 @@ impl RemoteData {
                 minutes_since: Some(m),
                 seconds_since: Some(s),
                 ..
-            } if h > &mut 0 => format!("{}h {}m {}s ago", h, m, s),
+            } if *h > 0 => format!("{}h {}m {}s ago", h, m, s),
             Self {
                 hours_since: Some(0),
                 minutes_since: Some(m),
                 seconds_since: Some(s),
                 ..
-            } if m > &mut 0 => format!("{}m {}s ago", m, s),
+            } if *m > 0 => format!("{}m {}s ago", m, s),
             Self {
                 hours_since: Some(0),
                 minutes_since: Some(0),
                 seconds_since: Some(s),
                 ..
-            } if s > &mut 5 => format!("{}s ago", s),
+            } if *s > 5 => format!("{}s ago", s),
             _ => "Just now".to_string(),
         };
 
