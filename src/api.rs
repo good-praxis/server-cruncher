@@ -1,5 +1,5 @@
 /// Collection of structs and helpers for interaction with the HCLOUD API
-use crate::utils::Data;
+use crate::utils::{Data, RemoteData};
 use hcloud::apis::configuration::Configuration;
 use hcloud::apis::servers_api;
 use lazy_static::lazy_static;
@@ -16,14 +16,14 @@ lazy_static! {
     };
 }
 
-pub fn req_server_list(tx: Sender<Data>, ctx: egui::Context) {
+pub fn req_server_list(tx: Sender<RemoteData>, ctx: egui::Context) {
     tokio::spawn(async move {
         let servers = servers_api::list_servers(&CONFIGURATION, Default::default())
             .await
             .expect("Unable to fetch Server list") // TODO: Propogade error to UI
             .servers;
 
-        let _ = tx.send(Data::Servers(servers));
+        let _ = tx.send(RemoteData::new(Data::Servers(servers)));
         ctx.request_repaint();
     });
 }
