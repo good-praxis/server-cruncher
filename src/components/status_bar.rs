@@ -21,7 +21,13 @@ impl StatusBar {
             };
 
             ui.horizontal(|ui| {
-                if ui.button("Request Server List").clicked() {
+                if ui
+                    .button("⟲")
+                    .on_hover_ui(|ui| {
+                        ui.label("Refresh Server List");
+                    })
+                    .clicked()
+                {
                     api::req_server_list(tx.clone(), ctx.clone())
                 }
                 ui.label(format!("Last updated: {}", last_updated));
