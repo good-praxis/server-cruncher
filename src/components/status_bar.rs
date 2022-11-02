@@ -1,5 +1,5 @@
 use crate::{api, utils::RemoteData};
-use egui::{Context, InnerResponse, TopBottomPanel};
+use egui::{Context, InnerResponse, TopBottomPanel, Ui};
 use std::sync::mpsc::Sender;
 
 type Component = InnerResponse<()>;
@@ -21,17 +21,15 @@ impl StatusBar {
             };
 
             ui.horizontal(|ui| {
-                if ui
-                    .button("⟲")
-                    .on_hover_ui(|ui| {
-                        ui.label("Refresh Server List");
-                    })
-                    .clicked()
-                {
+                if ui.button("⟲").on_hover_ui(Self::tooltip).clicked() {
                     api::req_server_list(tx.clone(), ctx.clone())
                 }
                 ui.label(format!("Last updated: {}", last_updated));
             });
         })
+    }
+
+    fn tooltip(ui: &mut Ui) {
+        ui.label("Refresh Server List");
     }
 }
