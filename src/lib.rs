@@ -5,3 +5,6 @@ pub use app::ServerCruncherApp;
 
 mod api;
 mod utils;
+
+mod components;
+pub use components::ServerWindow;
