@@ -1,7 +1,6 @@
 use crate::{
-    api,
+    components::{ServerWindow, StatusBar},
     utils::{Data, RemoteData},
-    ServerWindow,
 };
 use chrono::prelude::*;
 use std::{
@@ -86,23 +85,7 @@ impl eframe::App for ServerCruncherApp {
             }
         }
 
-        egui::SidePanel::left("side_panel").show(ctx, |ui| {
-            ui.heading("Side Panel");
-
-            if ui.button("Request Server List").clicked() {
-                api::req_server_list(self.tx.clone(), ctx.clone())
-            }
-
-            let last_updated = match self.server_list.borrow_mut() {
-                None => "Never",
-                Some(remote) => {
-                    remote.generate_update_label();
-                    &remote.label
-                }
-            };
-
-            ui.label(format!("Last updated: {}", last_updated));
-        });
+        StatusBar::build(self.server_list.borrow_mut(), &self.tx, ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's

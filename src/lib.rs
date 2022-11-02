@@ -7,4 +7,3 @@ mod api;
 mod utils;
 
 mod components;
-pub use components::ServerWindow;
