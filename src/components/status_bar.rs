@@ -38,7 +38,7 @@ impl StatusBar {
                 ui.spinner().on_hover_cursor(CursorIcon::Wait);
             }
             false => {
-                if ui.button("⟲").on_hover_ui(Self::tooltip).clicked() {
+                if ui.button("⟳").on_hover_ui(Self::tooltip).clicked() {
                     *loading = true;
                     api::req_server_list(tx.clone(), ctx.clone());
                 }
