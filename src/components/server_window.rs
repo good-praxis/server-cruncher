@@ -3,7 +3,7 @@ use hcloud::models::Server;
 
 type Component = Option<InnerResponse<Option<()>>>;
 
-pub struct ServerWindow {}
+pub struct ServerWindow;
 impl ServerWindow {
     pub fn build(server: &Server, ctx: &Context) -> Component {
         Window::new(server.name.as_str()).show(ctx, |ui| {

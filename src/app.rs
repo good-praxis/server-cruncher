@@ -4,7 +4,6 @@ use crate::{
 };
 use chrono::prelude::*;
 use std::{
-    borrow::BorrowMut,
     sync::mpsc::{Receiver, Sender},
     time::Duration,
 };
@@ -22,6 +21,9 @@ pub struct ServerCruncherApp {
     //#[serde(with = "ts_seconds_option")]
     #[serde(skip)]
     server_list_updated: Option<DateTime<Utc>>,
+
+    #[serde(skip)] // Always skip UI Indicators
+    remote_loading: bool,
 }
 
 impl Default for ServerCruncherApp {
@@ -33,6 +35,7 @@ impl Default for ServerCruncherApp {
             rx,
             server_list: None,
             server_list_updated: None,
+            remote_loading: false,
         }
     }
 }
@@ -81,11 +84,19 @@ impl eframe::App for ServerCruncherApp {
 
         if let Ok(remote) = self.rx.try_recv() {
             match remote.data {
-                Data::Servers(_) => self.server_list = Some(remote),
+                Data::Servers(_) => {
+                    self.server_list = Some(remote);
+                    self.remote_loading = false;
+                }
             }
         }
 
-        StatusBar::build(self.server_list.borrow_mut(), &self.tx, ctx);
+        StatusBar::build(
+            &mut self.server_list,
+            &mut self.remote_loading,
+            &self.tx,
+            ctx,
+        );
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
