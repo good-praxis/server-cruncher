@@ -3,13 +3,13 @@ use egui::{Context, CursorIcon, TopBottomPanel, Ui};
 use std::sync::mpsc::Sender;
 
 pub fn status_bar(
-    server_list: &mut Option<RemoteData>,
-    loading: &mut (bool, bool),
+    application_list: &mut Option<RemoteData>,
+    loading: &mut bool,
     tx: &Sender<RemoteData>,
     ctx: &Context,
 ) {
     TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
-        let last_updated = match server_list {
+        let last_updated = match application_list {
             None => "Never",
             Some(remote) => {
                 remote.generate_update_label();
@@ -28,16 +28,15 @@ fn tooltip(ui: &mut Ui) {
     ui.label("Refresh Server List");
 }
 
-fn button(ui: &mut Ui, loading: &mut (bool, bool), tx: &Sender<RemoteData>, ctx: &Context) {
+fn button(ui: &mut Ui, loading: &mut bool, tx: &Sender<RemoteData>, ctx: &Context) {
     match loading {
-        (true, _) | (_, true) => {
+        true => {
             ui.spinner().on_hover_cursor(CursorIcon::Wait);
         }
         _ => {
             if ui.button("⟳").on_hover_ui(tooltip).clicked() {
-                *loading = (true, true);
-                api::req_server_list(tx.clone(), ctx.clone());
-                api::req_images_list(tx.clone(), ctx.clone());
+                *loading = true;
+                api::req_application_list(tx.clone(), ctx.clone());
             }
         }
     }

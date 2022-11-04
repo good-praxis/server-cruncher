@@ -28,8 +28,11 @@ pub struct ServerCruncherApp {
     #[serde(skip)]
     unnamed_image_counter: usize,
 
+    #[serde(skip)]
+    application_list: Option<RemoteData>,
+
     #[serde(skip)] // Always skip UI Indicators
-    remote_loading: (bool, bool), // FIXME: avoid unclear tuple
+    remote_loading: bool,
 
     #[serde(skip)] // Skip error log
     error_log: Vec<Error>,
@@ -49,7 +52,8 @@ impl Default for ServerCruncherApp {
             server_list_updated: None,
             images_list: None,
             unnamed_image_counter: 0,
-            remote_loading: (false, false),
+            application_list: None,
+            remote_loading: false,
             error_log: Vec::new(),
             show_error_log: false,
         }
@@ -107,27 +111,23 @@ impl eframe::App for ServerCruncherApp {
 
         if let Ok(remote) = self.rx.try_recv() {
             match remote.data {
-                Data::Servers(_) => {
-                    self.server_list = Some(remote);
-                    self.remote_loading.0 = false;
-                }
-                Data::Images(_) => {
-                    self.images_list = Some(remote);
-                    self.remote_loading.1 = false;
+                Data::Application(_) => {
+                    self.application_list = Some(remote);
+                    self.remote_loading = false
                 }
                 Data::Error(e) => {
                     self.error_log.push(Error {
                         error: e,
                         ts: remote.updated_at,
                     });
-                    self.remote_loading = (false, false);
+                    self.remote_loading = false;
                     self.show_error_log = true;
                 }
             }
         }
 
         components::status_bar(
-            &mut self.server_list,
+            &mut self.application_list,
             &mut self.remote_loading,
             &self.tx,
             ctx,
@@ -138,26 +138,26 @@ impl eframe::App for ServerCruncherApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
 
-            if let Some(RemoteData {
-                data: Data::Servers(servers),
-                ..
-            }) = &self.server_list
-            {
-                for server in servers {
-                    components::server_window(server, ctx);
-                }
-            }
+            /* if let Some(RemoteData {
+                           data: Data::Servers(servers),
+                           ..
+                       }) = &self.server_list
+                       {
+                           for server in servers {
+                               components::server_window(server, ctx);
+                           }
+                       }
 
-            if let Some(RemoteData {
-                data: Data::Images(images),
-                ..
-            }) = &self.images_list
-            {
-                for image in images {
-                    components::image_window(&mut self.unnamed_image_counter, image, ctx);
-                }
-            }
-
+                       if let Some(RemoteData {
+                           data: Data::Images(images),
+                           ..
+                       }) = &self.images_list
+                       {
+                           for image in images {
+                               components::image_window(&mut self.unnamed_image_counter, image, ctx);
+                           }
+                       }
+            */
             ctx.request_repaint_after(Duration::new(1, 0));
             egui::warn_if_debug_build(ui);
         });

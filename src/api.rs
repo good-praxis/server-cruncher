@@ -1,5 +1,5 @@
 /// Collection of structs and helpers for interaction with the HCLOUD API
-use crate::utils::{Data, RemoteData};
+use crate::utils::{generate_application_list, Data, RemoteData};
 use hcloud::apis::configuration::Configuration;
 use hcloud::apis::{images_api, servers_api};
 use lazy_static::lazy_static;
@@ -17,26 +17,17 @@ lazy_static! {
     };
 }
 
-pub fn req_server_list(tx: Sender<RemoteData>, ctx: egui::Context) {
+pub fn req_application_list(tx: Sender<RemoteData>, ctx: egui::Context) {
     tokio::spawn(async move {
         let servers = servers_api::list_servers(&CONFIGURATION, Default::default()).await;
-
-        let _ = match servers {
-            Ok(servers) => tx.send(RemoteData::new(Data::Servers(servers.servers))),
-            Err(e) => tx.send(RemoteData::new(Data::Error(e.to_string()))),
-        };
-
-        ctx.request_repaint();
-    });
-}
-
-pub fn req_images_list(tx: Sender<RemoteData>, ctx: egui::Context) {
-    tokio::spawn(async move {
         let images = images_api::list_images(&CONFIGURATION, Default::default()).await;
 
-        let _ = match images {
-            Ok(images) => tx.send(RemoteData::new(Data::Images(images.images))),
-            Err(e) => tx.send(RemoteData::new(Data::Error(e.to_string()))),
+        let _ = match (servers, images) {
+            (Err(e), _) => tx.send(RemoteData::new(Data::Error(e.to_string()))),
+            (Ok(_), Err(e)) => tx.send(RemoteData::new(Data::Error(e.to_string()))),
+            (Ok(servers), Ok(images)) => tx.send(RemoteData::new(Data::Application(
+                generate_application_list(&servers, &images),
+            ))),
         };
 
         ctx.request_repaint();

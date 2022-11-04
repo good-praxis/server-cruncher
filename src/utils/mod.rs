@@ -1,13 +1,15 @@
 use chrono::{DateTime, Utc};
-use hcloud::models::{server::Server, Image};
+use hcloud::models::{Image, Server};
 
 mod remote_data;
 pub use remote_data::RemoteData;
 
+mod application;
+pub use application::{generate_application_list, Application};
+
 #[derive(Debug, Clone)]
 pub enum Data {
-    Servers(Vec<Server>),
-    Images(Vec<Image>),
+    Application(Vec<Application>),
     Error(String),
 }
 
