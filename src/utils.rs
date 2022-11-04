@@ -34,18 +34,11 @@ impl RemoteData {
         }
     }
 
-    fn update_inner_timing(&mut self) -> &mut Self {
-        let mut diff = Utc::now().timestamp_millis() - self.updated_at.timestamp_millis();
-
+    fn update_inner_timing(&mut self) {
+        let diff = Utc::now().timestamp_millis() - self.updated_at.timestamp_millis();
+        self.seconds_since = Some(diff / SECOND % 60);
+        self.minutes_since = Some(diff / MINUTE % 60);
         self.hours_since = Some(diff / HOUR);
-        diff %= HOUR;
-
-        self.minutes_since = Some(diff / MINUTE);
-        diff %= MINUTE;
-
-        self.seconds_since = Some(diff / SECOND);
-
-        self
     }
 
     pub fn generate_update_label(&mut self) -> &mut Self {
