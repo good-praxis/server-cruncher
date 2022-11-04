@@ -2,7 +2,6 @@ use crate::{
     components,
     utils::{Data, Error, RemoteData},
 };
-use chrono::prelude::*;
 use std::{
     sync::mpsc::{Receiver, Sender},
     time::Duration,
@@ -15,18 +14,6 @@ pub struct ServerCruncherApp {
     tx: Sender<RemoteData>,
     #[serde(skip)]
     rx: Receiver<RemoteData>,
-
-    #[serde(skip)] // FIXME: During dev only
-    server_list: Option<RemoteData>,
-    //#[serde(with = "ts_seconds_option")]
-    #[serde(skip)]
-    server_list_updated: Option<DateTime<Utc>>,
-
-    #[serde(skip)]
-    images_list: Option<RemoteData>,
-
-    #[serde(skip)]
-    unnamed_image_counter: usize,
 
     #[serde(skip)]
     application_list: Option<RemoteData>,
@@ -48,10 +35,6 @@ impl Default for ServerCruncherApp {
         Self {
             tx,
             rx,
-            server_list: None,
-            server_list_updated: None,
-            images_list: None,
-            unnamed_image_counter: 0,
             application_list: None,
             remote_loading: false,
             error_log: Vec::new(),
@@ -89,8 +72,6 @@ impl eframe::App for ServerCruncherApp {
         // Pick whichever suits you.
         // Tip: a good default choice is to just keep the `CentralPanel`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
-
-        self.unnamed_image_counter = 0; // Reset counter
 
         #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
