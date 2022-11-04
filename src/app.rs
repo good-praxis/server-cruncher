@@ -87,6 +87,11 @@ impl eframe::App for ServerCruncherApp {
                         _frame.close();
                     }
                 });
+                ui.menu_button("Help", |ui| {
+                    if ui.button("Show Error Log").clicked() {
+                        self.show_error_log = true;
+                    }
+                })
             });
         });
 
