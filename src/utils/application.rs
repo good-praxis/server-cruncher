@@ -49,8 +49,6 @@ impl Application {
         let Image { created_from, .. } = image;
 
         match (created_from.clone(), self.name.clone()) {
-            (None, _) => false,
-            (Some(_), None) => false,
             (Some(source), Some(name)) if source.name == name => {
                 self.add_image(image);
                 true
