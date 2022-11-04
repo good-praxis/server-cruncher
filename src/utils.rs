@@ -8,6 +8,7 @@ const HOUR: i64 = MINUTE * 60;
 #[derive(Debug, Clone)]
 pub enum Data {
     Servers(Vec<Server>),
+    Error(String),
 }
 
 #[derive(Debug, Clone)]
@@ -73,4 +74,10 @@ impl RemoteData {
 
         self
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct Error {
+    pub error: String,
+    pub ts: DateTime<Utc>,
 }

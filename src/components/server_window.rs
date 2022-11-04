@@ -1,4 +1,4 @@
-use egui::{Context, InnerResponse, Window};
+use egui::{Context, Window};
 use hcloud::models::Server;
 
 pub fn server_window(server: &Server, ctx: &Context) {

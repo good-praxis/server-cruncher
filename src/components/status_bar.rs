@@ -1,5 +1,5 @@
 use crate::{api, utils::RemoteData};
-use egui::{Context, CursorIcon, InnerResponse, TopBottomPanel, Ui};
+use egui::{Context, CursorIcon, TopBottomPanel, Ui};
 use std::sync::mpsc::Sender;
 
 pub fn status_bar(

@@ -1,6 +1,6 @@
 use crate::{
     components,
-    utils::{Data, RemoteData},
+    utils::{Data, Error, RemoteData},
 };
 use chrono::prelude::*;
 use std::{
@@ -24,6 +24,12 @@ pub struct ServerCruncherApp {
 
     #[serde(skip)] // Always skip UI Indicators
     remote_loading: bool,
+
+    #[serde(skip)] // Skip error log
+    error_log: Vec<Error>,
+
+    #[serde(skip)]
+    show_error_log: bool,
 }
 
 impl Default for ServerCruncherApp {
@@ -36,6 +42,8 @@ impl Default for ServerCruncherApp {
             server_list: None,
             server_list_updated: None,
             remote_loading: false,
+            error_log: Vec::new(),
+            show_error_log: false,
         }
     }
 }
@@ -88,6 +96,14 @@ impl eframe::App for ServerCruncherApp {
                     self.server_list = Some(remote);
                     self.remote_loading = false;
                 }
+                Data::Error(e) => {
+                    self.error_log.push(Error {
+                        error: e,
+                        ts: remote.updated_at,
+                    });
+                    self.remote_loading = false;
+                    self.show_error_log = true;
+                }
             }
         }
 
@@ -97,6 +113,8 @@ impl eframe::App for ServerCruncherApp {
             &self.tx,
             ctx,
         );
+
+        components::error_window(&self.error_log, &mut self.show_error_log, ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
