@@ -119,7 +119,7 @@ impl eframe::App for ServerCruncherApp {
             ctx,
         );
 
-        components::error_window(&self.error_log, &mut self.show_error_log, ctx);
+        components::error_window(&mut self.error_log, &mut self.show_error_log, ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's

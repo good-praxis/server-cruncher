@@ -1,21 +1,40 @@
 use crate::utils::Error;
-use egui::{Color32, Context, RichText, ScrollArea, TextStyle, Ui, Window};
+use egui::{Button, Color32, Context, RichText, ScrollArea, TextStyle, Ui, Window};
 
-pub fn error_window(error_log: &Vec<Error>, open: &mut bool, ctx: &Context) {
-    Window::new("error_log").open(open).show(ctx, |ui| {
+pub fn error_window(error_log: &mut Vec<Error>, open: &mut bool, ctx: &Context) {
+    Window::new("Error Log").open(open).show(ctx, |ui| {
         let row_height = ui.text_style_height(&TextStyle::Body);
-        let total_rows = error_log.len();
+        let mut total_rows = error_log.len();
 
-        ScrollArea::vertical().stick_to_bottom(true).show_rows(
-            ui,
-            row_height * 2.0,
-            total_rows,
-            |ui, error_range| {
-                for i in error_range {
-                    row(ui, error_log.get(i).expect("Index of range"));
-                }
-            },
-        );
+        if ui
+            .add_enabled(total_rows > 0, Button::new("Clear log"))
+            .clicked()
+        {
+            error_log.clear();
+            total_rows = 0;
+        }
+        ui.separator();
+
+        match total_rows {
+            0 => {
+                ui.heading("Nothing to see here!");
+                ui.label(
+                    RichText::new("Imagine there's no errors...")
+                        .italics()
+                        .color(Color32::DARK_GRAY),
+                );
+            }
+            _ => {
+                ScrollArea::vertical()
+                    .stick_to_bottom(true)
+                    .max_height(300.0)
+                    .show_rows(ui, row_height * 2.0, total_rows, |ui, error_range| {
+                        for i in error_range {
+                            row(ui, error_log.get(i).expect("Index of range"));
+                        }
+                    });
+            }
+        }
     });
 }
 
