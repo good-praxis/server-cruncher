@@ -1,5 +1,5 @@
 use crate::{
-    components::{ServerWindow, StatusBar},
+    components,
     utils::{Data, RemoteData},
 };
 use chrono::prelude::*;
@@ -91,7 +91,7 @@ impl eframe::App for ServerCruncherApp {
             }
         }
 
-        StatusBar::build(
+        components::status_bar(
             &mut self.server_list,
             &mut self.remote_loading,
             &self.tx,
@@ -107,7 +107,7 @@ impl eframe::App for ServerCruncherApp {
             }) = &self.server_list
             {
                 for server in servers {
-                    ServerWindow::build(server, ctx);
+                    components::server_window(server, ctx);
                 }
             }
 
