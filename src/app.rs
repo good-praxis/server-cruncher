@@ -22,8 +22,14 @@ pub struct ServerCruncherApp {
     #[serde(skip)]
     server_list_updated: Option<DateTime<Utc>>,
 
+    #[serde(skip)]
+    images_list: Option<RemoteData>,
+
+    #[serde(skip)]
+    unnamed_image_counter: usize,
+
     #[serde(skip)] // Always skip UI Indicators
-    remote_loading: bool,
+    remote_loading: (bool, bool), // FIXME: avoid unclear tuple
 
     #[serde(skip)] // Skip error log
     error_log: Vec<Error>,
@@ -41,7 +47,9 @@ impl Default for ServerCruncherApp {
             rx,
             server_list: None,
             server_list_updated: None,
-            remote_loading: false,
+            images_list: None,
+            unnamed_image_counter: 0,
+            remote_loading: (false, false),
             error_log: Vec::new(),
             show_error_log: false,
         }
@@ -78,6 +86,8 @@ impl eframe::App for ServerCruncherApp {
         // Tip: a good default choice is to just keep the `CentralPanel`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
+        self.unnamed_image_counter = 0; // Reset counter
+
         #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
@@ -99,14 +109,18 @@ impl eframe::App for ServerCruncherApp {
             match remote.data {
                 Data::Servers(_) => {
                     self.server_list = Some(remote);
-                    self.remote_loading = false;
+                    self.remote_loading.0 = false;
+                }
+                Data::Images(_) => {
+                    self.images_list = Some(remote);
+                    self.remote_loading.1 = false;
                 }
                 Data::Error(e) => {
                     self.error_log.push(Error {
                         error: e,
                         ts: remote.updated_at,
                     });
-                    self.remote_loading = false;
+                    self.remote_loading = (false, false);
                     self.show_error_log = true;
                 }
             }
@@ -131,6 +145,16 @@ impl eframe::App for ServerCruncherApp {
             {
                 for server in servers {
                     components::server_window(server, ctx);
+                }
+            }
+
+            if let Some(RemoteData {
+                data: Data::Images(images),
+                ..
+            }) = &self.images_list
+            {
+                for image in images {
+                    components::image_window(&mut self.unnamed_image_counter, image, ctx);
                 }
             }
 

@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use hcloud::models::server::Server;
+use hcloud::models::{server::Server, Image};
 
 const SECOND: i64 = 1000;
 const MINUTE: i64 = SECOND * 60;
@@ -8,6 +8,7 @@ const HOUR: i64 = MINUTE * 60;
 #[derive(Debug, Clone)]
 pub enum Data {
     Servers(Vec<Server>),
+    Images(Vec<Image>),
     Error(String),
 }
 

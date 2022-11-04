@@ -4,7 +4,7 @@ use std::sync::mpsc::Sender;
 
 pub fn status_bar(
     server_list: &mut Option<RemoteData>,
-    loading: &mut bool,
+    loading: &mut (bool, bool),
     tx: &Sender<RemoteData>,
     ctx: &Context,
 ) {
@@ -28,15 +28,16 @@ fn tooltip(ui: &mut Ui) {
     ui.label("Refresh Server List");
 }
 
-fn button(ui: &mut Ui, loading: &mut bool, tx: &Sender<RemoteData>, ctx: &Context) {
+fn button(ui: &mut Ui, loading: &mut (bool, bool), tx: &Sender<RemoteData>, ctx: &Context) {
     match loading {
-        true => {
+        (true, _) | (_, true) => {
             ui.spinner().on_hover_cursor(CursorIcon::Wait);
         }
-        false => {
+        _ => {
             if ui.button("⟳").on_hover_ui(tooltip).clicked() {
-                *loading = true;
+                *loading = (true, true);
                 api::req_server_list(tx.clone(), ctx.clone());
+                api::req_images_list(tx.clone(), ctx.clone());
             }
         }
     }
