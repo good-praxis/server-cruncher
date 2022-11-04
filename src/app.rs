@@ -138,26 +138,15 @@ impl eframe::App for ServerCruncherApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
 
-            /* if let Some(RemoteData {
-                           data: Data::Servers(servers),
-                           ..
-                       }) = &self.server_list
-                       {
-                           for server in servers {
-                               components::server_window(server, ctx);
-                           }
-                       }
-
-                       if let Some(RemoteData {
-                           data: Data::Images(images),
-                           ..
-                       }) = &self.images_list
-                       {
-                           for image in images {
-                               components::image_window(&mut self.unnamed_image_counter, image, ctx);
-                           }
-                       }
-            */
+            if let Some(RemoteData {
+                data: Data::Application(applications),
+                ..
+            }) = &self.application_list
+            {
+                for application in applications {
+                    components::application_window(application, ctx);
+                }
+            }
             ctx.request_repaint_after(Duration::new(1, 0));
             egui::warn_if_debug_build(ui);
         });

@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use hcloud::models::{Image, Server};
 
 mod remote_data;
 pub use remote_data::RemoteData;

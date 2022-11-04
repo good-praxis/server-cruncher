@@ -25,6 +25,8 @@ impl Application {
     fn with_server(mut self, server: &Server) -> Self {
         self.name = Some(server.name.clone());
         self.status = Some(format!("{:?}", server.status));
+        let servers = vec![server.clone()];
+        self.servers = Some(servers);
         self
     }
 
@@ -36,6 +38,9 @@ impl Application {
             Some(name) => self.name = Some(name.clone()),
         }
         self.status = Some(format!("{:?}", status));
+
+        let images = vec![image.clone()];
+        self.images = Some(images);
 
         self
     }
@@ -57,8 +62,7 @@ impl Application {
     fn add_image(&mut self, image: &Image) {
         match &self.images {
             None => {
-                let mut vec = Vec::new();
-                vec.push(image.clone());
+                let vec = vec![image.clone()];
                 self.images = Some(vec);
             }
             Some(_) => {
@@ -95,20 +99,20 @@ pub fn generate_application_list(
 
     for image in &images.images {
         // Skip if this is anything but a snapshot
-        if image.r#type == Type::Snapshot {
-            break;
+        if image.r#type != Type::Snapshot {
+            continue;
         }
 
         let mut assinged = false;
         for app in &mut vec {
             if app.is_image_related(image) {
                 assinged = true;
-                break;
+                continue;
             }
         }
         // Break if we assinged in inner loop
         if assinged {
-            break;
+            continue;
         }
 
         let app = Application::new().with_image(image);
