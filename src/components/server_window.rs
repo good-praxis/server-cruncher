@@ -1,9 +1,7 @@
 use egui::{Context, InnerResponse, Window};
 use hcloud::models::Server;
 
-type Component = Option<InnerResponse<Option<()>>>;
-
-pub fn server_window(server: &Server, ctx: &Context) -> Component {
+pub fn server_window(server: &Server, ctx: &Context) {
     Window::new(server.name.as_str()).show(ctx, |ui| {
         ui.label(format!(
             "IP: {}",
@@ -15,5 +13,5 @@ pub fn server_window(server: &Server, ctx: &Context) -> Component {
         ));
         ui.label(format!("Status: {:?}", server.status));
         ui.collapsing("details", |ui| ui.label(format!("{:?}", server)));
-    })
+    });
 }

@@ -2,14 +2,12 @@ use crate::{api, utils::RemoteData};
 use egui::{Context, CursorIcon, InnerResponse, TopBottomPanel, Ui};
 use std::sync::mpsc::Sender;
 
-type Component = InnerResponse<()>;
-
 pub fn status_bar(
     server_list: &mut Option<RemoteData>,
     loading: &mut bool,
     tx: &Sender<RemoteData>,
     ctx: &Context,
-) -> Component {
+) {
     TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
         let last_updated = match server_list {
             None => "Never",
@@ -23,7 +21,7 @@ pub fn status_bar(
             button(ui, loading, tx, ctx);
             ui.label(format!("Last updated: {}", last_updated));
         });
-    })
+    });
 }
 
 fn tooltip(ui: &mut Ui) {
