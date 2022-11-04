@@ -21,8 +21,8 @@ pub fn error_window(error_log: &Vec<Error>, open: &mut bool, ctx: &Context) {
 
 fn row(ui: &mut Ui, e: &Error) {
     ui.horizontal(|ui| {
-        ui.label(RichText::new(format!("{} |", e.ts.to_string())).color(Color32::GRAY));
-        ui.label(RichText::new(format!("{}", e.error)).color(Color32::RED));
+        ui.label(RichText::new(format!("{} |", e.ts)).color(Color32::GRAY));
+        ui.label(RichText::new(e.error.to_string()).color(Color32::RED));
     });
     ui.separator();
 }
