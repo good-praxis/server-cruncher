@@ -121,36 +121,12 @@ pub fn generate_application_list(
 #[cfg(test)]
 mod tests {
     use super::Application;
-    use hcloud::models::{
-        image::{OsFlavor, Status, Type},
-        CreatedFrom, Image, Protection,
-    };
-    use std::collections::HashMap;
-
-    fn empty_snapshot() -> Image {
-        Image {
-            bound_to: None,
-            created: String::new(),
-            created_from: None,
-            deleted: None,
-            deprecated: None,
-            description: "".to_string(),
-            disk_size: 0.0,
-            id: 0,
-            image_size: None,
-            labels: HashMap::new(),
-            name: None,
-            os_flavor: OsFlavor::Unknown,
-            os_version: None,
-            protection: Box::new(Protection { delete: false }),
-            rapid_deploy: None,
-            status: Status::Available,
-            r#type: Type::Snapshot,
-        }
-    }
+    use crate::utils::{empty_server, empty_snapshot};
+    use hcloud::models::{CreatedFrom, Image, ListImagesResponse, ListServersResponse, Server};
 
     mod application {
-        use super::{empty_snapshot, Application, CreatedFrom};
+        use super::{empty_server, empty_snapshot, Application};
+        use hcloud::models::CreatedFrom;
 
         impl PartialEq for Application {
             fn eq(&self, other: &Self) -> bool {
@@ -205,7 +181,7 @@ mod tests {
             let image = empty_snapshot();
 
             let application = Application::new().with_image(&image);
-            let mut control_application = Application {
+            let control_application = Application {
                 id: application.id,
                 name: Some(format!("unnamed {}", application.id)),
                 status: Some("Available".to_string()),
@@ -214,12 +190,87 @@ mod tests {
             };
 
             assert_eq!(application, control_application);
-
-            // Ensure that another unnamed application will have a new id
-            let another_application = Application::new().with_image(&image);
-            control_application.id += 1;
-            control_application.name = Some(format!("unnamed {}", application.id + 1));
-            assert_eq!(another_application, control_application)
         }
+
+        #[test]
+        fn with_image_multiple_unamed() {
+            let image = empty_snapshot();
+            let application = Application::new().with_image(&image);
+            let another_application = Application::new().with_image(&image);
+            assert_eq!(application.id + 1, another_application.id)
+        }
+
+        #[test]
+        fn with_server() {
+            let mut server = empty_server();
+            server.name = "unique".to_string();
+            let application = Application::new().with_server(&server);
+            let mut control_application = Application::new();
+            control_application.id = application.id;
+            control_application.name = Some("unique".to_string());
+            control_application.status = Some("Running".to_string());
+            control_application.servers = Some(vec![server.clone()]);
+            assert_eq!(application, control_application);
+        }
+
+        #[test]
+        fn add_image() {
+            let image = empty_snapshot();
+            let mut application = Application::new();
+
+            assert_eq!(application.images, None);
+            application.add_image(&image);
+            assert_eq!(application.images, Some(vec![image.clone()]));
+            application.add_image(&image);
+            assert_eq!(application.images, Some(vec![image.clone(), image.clone()]));
+        }
+    }
+
+    #[test]
+    fn generate_application_list() {
+        let base_server = empty_server();
+        let server1 = Server {
+            name: "Amogus".to_string(),
+            ..base_server.clone()
+        };
+        let server2 = Server {
+            name: "In Our Midst".to_string(),
+            ..base_server.clone()
+        };
+        let server3 = Server {
+            name: "Amid Us".to_string(),
+            ..base_server.clone()
+        };
+        let base_image = empty_snapshot();
+        let image1 = Image {
+            created_from: Some(Box::new(CreatedFrom {
+                id: 0,
+                name: "Amogus".to_string(),
+            })),
+            ..base_image.clone()
+        };
+        let image2 = Image {
+            name: Some("In Our Group".to_string()),
+            ..base_image.clone()
+        };
+        let invalid_image = Image {
+            r#type: hcloud::models::image::Type::App,
+            ..base_image.clone()
+        };
+        let server_list = ListServersResponse {
+            meta: None,
+            servers: vec![server1, server2, server3],
+        };
+        let image_list = ListImagesResponse {
+            meta: None,
+            images: vec![image1, image2, invalid_image],
+        };
+        let applications = super::generate_application_list(&server_list, &image_list);
+        assert_eq!(applications.len(), 4);
+        let first = applications.get(0).unwrap();
+        let last = applications.get(3).unwrap();
+        assert_eq!(first.name.clone().unwrap(), "Amogus".to_string());
+        assert_eq!(first.images.clone().unwrap().len(), 1);
+        assert_eq!(last.name.clone().unwrap(), "In Our Group".to_string());
     }
 }

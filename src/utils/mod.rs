@@ -17,3 +17,8 @@ pub struct Error {
     pub error: String,
     pub ts: DateTime<Utc>,
 }
+
+#[cfg(test)]
+mod testing;
+#[cfg(test)]
+pub use testing::{empty_server, empty_snapshot};
