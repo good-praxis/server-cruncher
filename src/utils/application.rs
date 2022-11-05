@@ -47,11 +47,7 @@ impl Application {
 
     fn is_image_related(&self, image: &Image) -> bool {
         let Image { created_from, .. } = image;
-
-        match (created_from.clone(), self.name.clone()) {
-            (Some(source), Some(name)) if source.name == name => true,
-            _ => false,
-        }
+        matches!((created_from.clone(), self.name.clone()), (Some(source), Some(name)) if source.name == name)
     }
 
     fn add_image(&mut self, image: &Image) {
