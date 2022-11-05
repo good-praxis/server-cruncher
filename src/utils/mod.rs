@@ -1,10 +1,25 @@
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 
-mod remote_data;
-pub use remote_data::RemoteData;
+mod timestamp;
+pub use timestamp::Timestamp;
 
 mod application;
 pub use application::{generate_application_list, Application};
+
+#[derive(Debug, Clone)]
+pub struct RemoteData {
+    pub data: Data,
+    pub updated_at: Timestamp,
+}
+
+impl RemoteData {
+    pub fn new(data: Data) -> Self {
+        Self {
+            data,
+            updated_at: Timestamp::new(Utc::now()),
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum Data {
@@ -15,7 +30,7 @@ pub enum Data {
 #[derive(Debug, Clone)]
 pub struct Error {
     pub error: String,
-    pub ts: DateTime<Utc>,
+    pub ts: Timestamp,
 }
 
 #[cfg(test)]

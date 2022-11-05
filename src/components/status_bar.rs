@@ -10,11 +10,8 @@ pub fn status_bar(
 ) {
     TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
         let last_updated = match application_list {
-            None => "Never",
-            Some(remote) => {
-                remote.generate_update_label();
-                &remote.label
-            }
+            None => "Never".to_string(),
+            Some(remote) => remote.updated_at.to_string(),
         };
 
         ui.horizontal(|ui| {
