@@ -193,7 +193,8 @@ mod tests {
             let image = empty_snapshot();
             let application = Application::new().with_image(&image);
             let another_application = Application::new().with_image(&image);
-            assert_eq!(application.id + 1, another_application.id)
+            assert_ne!(application.id, another_application.id);
+            assert_ne!(application.name, another_application.name);
         }
 
         #[test]
