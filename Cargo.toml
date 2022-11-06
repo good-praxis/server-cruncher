@@ -19,6 +19,9 @@ hcloud = "0.13" # TODO: Remove for wasm compatible alternative
 chrono = { version = "0.4", features = ["serde"] }
 lazy_static = "1.4"
 
+[dev-dependencies]
+regex = "1"
+
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tracing-subscriber = "0.3"

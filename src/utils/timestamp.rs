@@ -1,10 +1,6 @@
 use chrono::{DateTime, Utc};
 use std::fmt;
 
-const SECOND: i64 = 1000;
-const MINUTE: i64 = SECOND * 60;
-const HOUR: i64 = MINUTE * 60;
-
 #[derive(Debug, Clone)]
 pub struct Timestamp {
     pub utc: DateTime<Utc>,
@@ -13,23 +9,25 @@ impl Timestamp {
     pub fn new(utc: DateTime<Utc>) -> Self {
         Self { utc }
     }
-    pub fn get_smh(&self) -> (i64, i64, i64) {
-        let diff = Utc::now().timestamp_millis() - self.utc.timestamp_millis();
-        let s = diff / SECOND % 60;
-        let m = diff / MINUTE % 60;
-        let h = diff / HOUR;
+    pub fn get_smh(&self, dt: &DateTime<Utc>) -> (i64, i64, i64) {
+        let diff = dt.timestamp() - self.utc.timestamp();
+        let s = diff % 60;
+        let m = diff / 60 % 60;
+        let h = diff / 3600;
         (s, m, h)
     }
-}
-impl fmt::Display for Timestamp {
-    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let str = match self.get_smh() {
+    pub fn to_string_with_dt(&self, dt: &DateTime<Utc>) -> String {
+        match self.get_smh(dt) {
             (s, m, h) if h > 0 => format!("{}h {}m {}s ago", h, m, s),
             (s, m, 0) if m > 0 => format!("{}m {}s ago", m, s),
             (s, 0, 0) if s > 5 => format!("{}s ago", s),
             _ => "Just now".to_string(),
-        };
-        fmt.write_str(&str)?;
+        }
+    }
+}
+impl fmt::Display for Timestamp {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.write_str(&self.to_string_with_dt(&Utc::now()))?;
         Ok(())
     }
 }
@@ -38,31 +36,55 @@ impl fmt::Display for Timestamp {
 mod test {
     use super::{DateTime, Timestamp, Utc};
     use chrono::NaiveDateTime;
+    use regex::Regex;
 
     #[test]
-    fn timestamp_display() {
-        let now = Timestamp::new(Utc::now());
-        assert_eq!(&now.to_string(), "Just now");
-
-        let seven_seconds_ago = DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp(Utc::now().timestamp() - 7, 0),
+    fn get_smh() {
+        const SECS: i64 = 3;
+        const MINS: i64 = 2;
+        const HOURS: i64 = 1;
+        let ts = Timestamp::new(Utc::now());
+        let offset = DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp(
+                ts.utc.timestamp() + (SECS + MINS * 60 + HOURS * 60 * 60),
+                0,
+            ),
             Utc,
         );
-        let seconds_ago = Timestamp::new(seven_seconds_ago);
-        assert_eq!(&seconds_ago.to_string(), "7s ago");
+        assert_eq!(ts.get_smh(&offset), (SECS, MINS, HOURS));
+    }
 
-        let five_minutes_ago = DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp(Utc::now().timestamp() - 5 * 60, 0),
+    #[test]
+    fn to_string_with_dt() {
+        let ts = Timestamp::new(Utc::now());
+        assert_eq!(ts.to_string_with_dt(&ts.utc), "Just now");
+
+        let offset_7_secs = DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp(ts.utc.timestamp() + 7, 0),
             Utc,
         );
-        let minutes_ago = Timestamp::new(five_minutes_ago);
-        assert_eq!(&minutes_ago.to_string(), "5m 0s ago");
+        assert_eq!(ts.to_string_with_dt(&offset_7_secs), "7s ago");
 
-        let three_hours_four_minutes_and_one_second_ago = DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp(Utc::now().timestamp() - (1 + 4 * 60 + 3 * 60 * 60), 0),
+        let offset_5_mins = DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp(ts.utc.timestamp() + 5 * 60, 0),
             Utc,
         );
-        let some_time_ago = Timestamp::new(three_hours_four_minutes_and_one_second_ago);
-        assert_eq!(&some_time_ago.to_string(), "3h 4m 1s ago");
+        assert_eq!(ts.to_string_with_dt(&offset_5_mins), "5m 0s ago");
+
+        let offset_3_hours_4_mins_1_sec = DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp(ts.utc.timestamp() + (1 + 4 * 60 + 3 * 60 * 60), 0),
+            Utc,
+        );
+        assert_eq!(
+            ts.to_string_with_dt(&offset_3_hours_4_mins_1_sec),
+            "3h 4m 1s ago"
+        );
+    }
+
+    #[test]
+    fn timestamp_fmt() {
+        let ts = Timestamp::new(Utc::now());
+        let re = Regex::new(r"^(((\d+h )?\d+m )?\d+s ago|Just now)$").unwrap();
+        assert!(re.is_match(&ts.to_string()));
     }
 }
