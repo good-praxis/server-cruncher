@@ -1,10 +1,8 @@
-use serde_encrypt::{
-    shared_key::SharedKey, traits::SerdeEncryptSharedKey, AsSharedKey, EncryptedMessage,
-};
+use serde_encrypt::{shared_key::SharedKey, AsSharedKey};
 
 use crate::{
     components,
-    utils::{Data, Error, Key, RemoteData, Secret},
+    utils::{Data, Error, RemoteData, Secret},
 };
 use std::{
     sync::mpsc::{Receiver, Sender},
@@ -66,16 +64,10 @@ impl ServerCruncherApp {
                 eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
 
             // Unencrypt api key
-            match loaded_app.hcloud_api_secret {
-                Some(Secret::Encrypted(secret)) => {
-                    if let Ok(encrypted_secret) = EncryptedMessage::deserialize(secret) {
-                        loaded_app.hcloud_api_secret = Some(Secret::Unencrypted(
-                            Key::decrypt_owned(&encrypted_secret, &loaded_app.local_key).unwrap(),
-                        ))
-                    }
-                }
-                _ => (),
+            if let Some(secret) = loaded_app.hcloud_api_secret {
+                loaded_app.hcloud_api_secret = Some(secret.decrypt(&loaded_app.local_key));
             }
+            return loaded_app;
         }
 
         Default::default()
@@ -86,10 +78,8 @@ impl eframe::App for ServerCruncherApp {
     /// Called by the frame work to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         // Encrypt API keys before writing to disk
-        if let Some(Secret::Unencrypted(secret)) = &self.hcloud_api_secret {
-            self.hcloud_api_secret = Some(Secret::Encrypted(
-                secret.encrypt(&self.local_key).unwrap().serialize(),
-            ));
+        if let Some(secret) = self.hcloud_api_secret.clone() {
+            self.hcloud_api_secret = Some(secret.encrypt(&self.local_key));
         }
         eframe::set_value(storage, eframe::APP_KEY, self);
     }

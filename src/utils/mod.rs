@@ -1,11 +1,13 @@
 use chrono::Utc;
 
 mod timestamp;
-use serde_encrypt::{serialize::impls::BincodeSerializer, traits::SerdeEncryptSharedKey};
 pub use timestamp::Timestamp;
 
 mod application;
 pub use application::{generate_application_list, Application};
+
+mod secret;
+pub use secret::{Key, Secret};
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct RemoteData {
@@ -32,18 +34,6 @@ pub enum Data {
 pub struct Error {
     pub error: String,
     pub ts: Timestamp,
-}
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub enum Secret {
-    Unencrypted(Key),
-    Encrypted(Vec<u8>),
-}
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct Key(pub String);
-impl SerdeEncryptSharedKey for Key {
-    type S = BincodeSerializer<Self>;
 }
 
 #[cfg(test)]
