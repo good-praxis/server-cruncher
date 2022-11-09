@@ -36,7 +36,7 @@ impl Secret {
 }
 
 fn encrypt_cleartext(cleartext: Key, key: &SharedKey) -> Result<Vec<u8>, Error> {
-    let encrypted = cleartext.encrypt(&key);
+    let encrypted = cleartext.encrypt(key);
     match encrypted {
         Err(e) => Err(e),
         Ok(encrypted) => Ok(encrypted.serialize()),
@@ -45,7 +45,7 @@ fn encrypt_cleartext(cleartext: Key, key: &SharedKey) -> Result<Vec<u8>, Error> 
 
 fn decrypt_secret(secret: Vec<u8>, key: &SharedKey) -> Result<Key, Error> {
     let encrypted_key = EncryptedMessage::deserialize(secret)?;
-    Key::decrypt_owned(&encrypted_key, &key)
+    Key::decrypt_owned(&encrypted_key, key)
 }
 
 #[cfg(test)]
