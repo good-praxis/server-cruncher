@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Timestamp {
     pub utc: DateTime<Utc>,
 }

@@ -11,11 +11,10 @@ rust-version = "1.60"
 [dependencies]
 egui = "0.19.0"
 eframe = { version = "0.19.0", features = ["persistence"] }
-serde = { version = "1", features = [
-    "derive",
-] } # You only need this if you want app persistence
+serde = { version = "1", features = ["derive"] }
+serde-encrypt = "0.7.0"
 tokio = { version = "1", features = ["full"] }
-hcloud = "0.13" # TODO: Remove for wasm compatible alternative
+hcloud = "0.13"                                             # TODO: Remove for wasm compatible alternative
 chrono = { version = "0.4", features = ["serde"] }
 lazy_static = "1.4"
 

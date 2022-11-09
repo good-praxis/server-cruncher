@@ -3,7 +3,7 @@ use std::sync::atomic;
 
 static COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Application {
     id: usize,
     pub name: Option<String>,

@@ -1,6 +1,10 @@
+use serde_encrypt::{
+    shared_key::SharedKey, traits::SerdeEncryptSharedKey, AsSharedKey, EncryptedMessage,
+};
+
 use crate::{
     components,
-    utils::{Data, Error, RemoteData},
+    utils::{Data, Error, Key, RemoteData, Secret},
 };
 use std::{
     sync::mpsc::{Receiver, Sender},
@@ -15,7 +19,11 @@ pub struct ServerCruncherApp {
     #[serde(skip)]
     rx: Receiver<RemoteData>,
 
+    local_key: SharedKey,
+
     #[serde(skip)]
+    hcloud_api_secret: Option<Secret>,
+
     application_list: Option<RemoteData>,
 
     #[serde(skip)] // Always skip UI Indicators
@@ -35,6 +43,8 @@ impl Default for ServerCruncherApp {
         Self {
             tx,
             rx,
+            local_key: AsSharedKey::generate(),
+            hcloud_api_secret: None,
             application_list: None,
             remote_loading: false,
             error_log: Vec::new(),
@@ -52,7 +62,20 @@ impl ServerCruncherApp {
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
         if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+            let mut loaded_app: Self =
+                eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+
+            // Unencrypt api key
+            match loaded_app.hcloud_api_secret {
+                Some(Secret::Encrypted(secret)) => {
+                    if let Ok(encrypted_secret) = EncryptedMessage::deserialize(secret) {
+                        loaded_app.hcloud_api_secret = Some(Secret::Unencrypted(
+                            Key::decrypt_owned(&encrypted_secret, &loaded_app.local_key).unwrap(),
+                        ))
+                    }
+                }
+                _ => (),
+            }
         }
 
         Default::default()
@@ -62,6 +85,12 @@ impl ServerCruncherApp {
 impl eframe::App for ServerCruncherApp {
     /// Called by the frame work to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        // Encrypt API keys before writing to disk
+        if let Some(Secret::Unencrypted(secret)) = &self.hcloud_api_secret {
+            self.hcloud_api_secret = Some(Secret::Encrypted(
+                secret.encrypt(&self.local_key).unwrap().serialize(),
+            ));
+        }
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
 
