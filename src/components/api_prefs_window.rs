@@ -29,7 +29,7 @@ impl ApiPerfsComponent {
             self.open = open;
         }
 
-        self.buf = buf.clone();
+        self.buf = buf;
     }
     pub fn open(&mut self, api_key: &Option<Secret>) {
         if !self.open {
@@ -42,6 +42,6 @@ impl ApiPerfsComponent {
     }
 
     fn enable_submit(&self) -> bool {
-        self.buf.len() > 0
+        !self.buf.is_empty()
     }
 }
