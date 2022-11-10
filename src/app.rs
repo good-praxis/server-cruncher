@@ -1,9 +1,8 @@
-use serde_encrypt::{shared_key::SharedKey, AsSharedKey};
-
 use crate::{
-    components,
+    components::{self, ApiPerfsComponent},
     utils::{Data, Error, RemoteData, Secret},
 };
+use serde_encrypt::{shared_key::SharedKey, AsSharedKey};
 use std::{
     sync::mpsc::{Receiver, Sender},
     time::Duration,
@@ -19,9 +18,7 @@ pub struct ServerCruncherApp {
 
     local_key: SharedKey,
 
-    #[serde(skip)]
     hcloud_api_secret: Option<Secret>,
-
     application_list: Option<RemoteData>,
 
     #[serde(skip)] // Always skip UI Indicators
@@ -32,6 +29,8 @@ pub struct ServerCruncherApp {
 
     #[serde(skip)]
     show_error_log: bool,
+    #[serde(skip)]
+    api_perfs: ApiPerfsComponent,
 }
 
 impl Default for ServerCruncherApp {
@@ -47,6 +46,7 @@ impl Default for ServerCruncherApp {
             remote_loading: false,
             error_log: Vec::new(),
             show_error_log: false,
+            api_perfs: Default::default(),
         }
     }
 }
@@ -101,11 +101,14 @@ impl eframe::App for ServerCruncherApp {
                         _frame.close();
                     }
                 });
-                ui.menu_button("Help", |ui| {
+                ui.menu_button("🔧 Settings", |ui| {
                     if ui.button("Show Error Log").clicked() {
                         self.show_error_log = true;
                     }
-                })
+                    if ui.button("API Preferences").clicked() {
+                        self.api_perfs.open(&self.hcloud_api_secret);
+                    }
+                });
             });
         });
 
@@ -129,11 +132,14 @@ impl eframe::App for ServerCruncherApp {
         components::status_bar(
             &mut self.application_list,
             &mut self.remote_loading,
+            &self.hcloud_api_secret,
             &self.tx,
             ctx,
         );
 
         components::error_window(&mut self.error_log, &mut self.show_error_log, ctx);
+        self.api_perfs
+            .api_prefs_window(&mut self.hcloud_api_secret, ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
