@@ -1,14 +1,9 @@
-use super::App;
+use crate::app::App;
 use crate::utils::{Application, Data, RemoteData};
 use egui::{Context, Window};
 
-pub trait ApplicationWindow {
-    fn draw_application_windows(&self, ctx: &Context);
-    fn draw_application_window(application: &Application, ctx: &Context);
-}
-
-impl ApplicationWindow for App {
-    fn draw_application_windows(&self, ctx: &Context) {
+impl App {
+    pub fn draw_application_windows(&self, ctx: &Context) {
         if let Some(RemoteData {
             data: Data::Application(applications),
             ..

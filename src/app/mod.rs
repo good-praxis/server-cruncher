@@ -1,7 +1,8 @@
-use crate::{
-    components::*,
-    utils::{Data, Error, RemoteData, Secret},
-};
+mod api;
+mod components;
+
+use crate::utils::{Data, Error, RemoteData, Secret};
+use components::*;
 use serde_encrypt::{shared_key::SharedKey, AsSharedKey};
 use std::{
     sync::mpsc::{Receiver, Sender},
@@ -12,25 +13,25 @@ use std::{
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct ServerCruncherApp {
     #[serde(skip)]
-    pub tx: Sender<RemoteData>,
+    tx: Sender<RemoteData>,
     #[serde(skip)]
     rx: Receiver<RemoteData>,
 
     local_key: SharedKey,
 
-    pub hcloud_api_secret: Option<Secret>,
-    pub application_list: Option<RemoteData>,
+    hcloud_api_secret: Option<Secret>,
+    application_list: Option<RemoteData>,
 
     #[serde(skip)] // Always skip UI Indicators
-    pub remote_loading: bool,
+    remote_loading: bool,
 
     #[serde(skip)] // Skip error log
-    pub error_log: Vec<Error>,
+    error_log: Vec<Error>,
 
     #[serde(skip)]
-    pub show_error_log: bool,
+    show_error_log: bool,
     #[serde(skip)]
-    pub api_perfs: ApiPerfsData,
+    api_perfs: ApiPerfsData,
 }
 
 impl Default for ServerCruncherApp {
@@ -137,3 +138,5 @@ impl eframe::App for ServerCruncherApp {
         });
     }
 }
+
+type App = ServerCruncherApp;

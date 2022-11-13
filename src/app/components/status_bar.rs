@@ -1,13 +1,9 @@
-use super::App;
-use crate::{api::ApiAccess, utils::Secret};
+use crate::app::App;
+use crate::utils::Secret;
 use egui::{Context, CursorIcon, TopBottomPanel, Ui};
 
-pub trait StatusBar {
-    fn draw_status_bar(&mut self, ctx: &Context);
-    fn _button(&mut self, ctx: &Context, ui: &mut Ui);
-}
-impl StatusBar for App {
-    fn draw_status_bar(&mut self, ctx: &Context) {
+impl App {
+    pub fn draw_status_bar(&mut self, ctx: &Context) {
         TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
             let last_updated = match self.application_list.clone() {
                 None => "Never".to_string(),
@@ -15,13 +11,13 @@ impl StatusBar for App {
             };
 
             ui.horizontal(|ui| {
-                self._button(ctx, ui);
+                self.button(ctx, ui);
                 ui.label(format!("Last updated: {}", last_updated));
             });
         });
     }
 
-    fn _button(&mut self, ctx: &Context, ui: &mut Ui) {
+    fn button(&mut self, ctx: &Context, ui: &mut Ui) {
         let Self {
             hcloud_api_secret, ..
         } = self;

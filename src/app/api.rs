@@ -1,15 +1,11 @@
+use super::App;
 use crate::utils::{generate_application_list, Data, RemoteData, Secret};
-use crate::ServerCruncherApp;
 use egui::Context;
 use hcloud::apis::configuration::Configuration;
 use hcloud::apis::{images_api, servers_api};
 
-pub trait ApiAccess {
-    fn req_application_list(&self, ctx: Context);
-}
-
-impl ApiAccess for ServerCruncherApp {
-    fn req_application_list(&self, ctx: Context) {
+impl App {
+    pub fn req_application_list(&self, ctx: Context) {
         let api_secret = self.hcloud_api_secret.clone();
         let tx = self.tx.clone();
         match api_secret {

@@ -1,16 +1,11 @@
 use std::borrow::BorrowMut;
 
-use super::App;
+use crate::app::App;
 use crate::utils::Error;
 use egui::{Button, Color32, Context, RichText, ScrollArea, TextStyle, Ui, Window};
 
-pub trait ErrorWindow {
-    fn draw_error_window(&mut self, ctx: &Context);
-    fn _row(ui: &mut Ui, e: &Error);
-}
-
-impl ErrorWindow for App {
-    fn draw_error_window(&mut self, ctx: &Context) {
+impl App {
+    pub fn draw_error_window(&mut self, ctx: &Context) {
         Window::new("Error Log")
             .open(self.show_error_log.borrow_mut())
             .show(ctx, |ui| {
@@ -41,7 +36,7 @@ impl ErrorWindow for App {
                             .max_height(300.0)
                             .show_rows(ui, row_height * 2.0, total_rows, |ui, error_range| {
                                 for i in error_range {
-                                    Self::_row(ui, self.error_log.get(i).expect("Index of range"));
+                                    Self::row(ui, self.error_log.get(i).expect("Index of range"));
                                 }
                             });
                     }
@@ -49,7 +44,7 @@ impl ErrorWindow for App {
             });
     }
 
-    fn _row(ui: &mut Ui, e: &Error) {
+    fn row(ui: &mut Ui, e: &Error) {
         ui.horizontal(|ui| {
             ui.label(RichText::new(format!("{} |", e.ts.utc)).color(Color32::GRAY));
             ui.label(RichText::new(e.error.to_string()).color(Color32::RED));

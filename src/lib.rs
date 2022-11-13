@@ -3,7 +3,4 @@
 mod app;
 pub use app::ServerCruncherApp;
 
-mod api;
 mod utils;
-
-mod components;
