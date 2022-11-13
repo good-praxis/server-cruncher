@@ -1,5 +1,5 @@
 use crate::{
-    components::{self, ApiPerfsComponent},
+    components::{self, ApiPerfsData, ApiPerfsWindow, StatusBar},
     utils::{Data, Error, RemoteData, Secret},
 };
 use serde_encrypt::{shared_key::SharedKey, AsSharedKey};
@@ -12,17 +12,17 @@ use std::{
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct ServerCruncherApp {
     #[serde(skip)]
-    tx: Sender<RemoteData>,
+    pub tx: Sender<RemoteData>,
     #[serde(skip)]
     rx: Receiver<RemoteData>,
 
     local_key: SharedKey,
 
-    hcloud_api_secret: Option<Secret>,
-    application_list: Option<RemoteData>,
+    pub hcloud_api_secret: Option<Secret>,
+    pub application_list: Option<RemoteData>,
 
     #[serde(skip)] // Always skip UI Indicators
-    remote_loading: bool,
+    pub remote_loading: bool,
 
     #[serde(skip)] // Skip error log
     error_log: Vec<Error>,
@@ -30,7 +30,7 @@ pub struct ServerCruncherApp {
     #[serde(skip)]
     show_error_log: bool,
     #[serde(skip)]
-    api_perfs: ApiPerfsComponent,
+    pub api_perfs: ApiPerfsData,
 }
 
 impl Default for ServerCruncherApp {
@@ -87,11 +87,6 @@ impl eframe::App for ServerCruncherApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Examples of how to create different panels and windows.
-        // Pick whichever suits you.
-        // Tip: a good default choice is to just keep the `CentralPanel`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
-
         #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
@@ -106,7 +101,7 @@ impl eframe::App for ServerCruncherApp {
                         self.show_error_log = true;
                     }
                     if ui.button("API Preferences").clicked() {
-                        self.api_perfs.open(&self.hcloud_api_secret);
+                        self.open_api_perfs_window();
                     }
                 });
             });
@@ -129,17 +124,10 @@ impl eframe::App for ServerCruncherApp {
             }
         }
 
-        components::status_bar(
-            &mut self.application_list,
-            &mut self.remote_loading,
-            &self.hcloud_api_secret,
-            &self.tx,
-            ctx,
-        );
+        self.draw_status_bar(ctx.clone());
 
         components::error_window(&mut self.error_log, &mut self.show_error_log, ctx);
-        self.api_perfs
-            .api_prefs_window(&mut self.hcloud_api_secret, ctx);
+        self.draw_api_perfs_window(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's

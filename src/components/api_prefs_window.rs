@@ -1,15 +1,22 @@
+use super::App;
 use crate::utils::{Key, Secret};
 use egui::{Context, TextEdit, Window};
 
 #[derive(Default, Clone)]
-pub struct ApiPerfsComponent {
+pub struct ApiPerfsData {
     buf: String,
     open: bool,
 }
 
-impl ApiPerfsComponent {
-    pub fn api_prefs_window(&mut self, api_data: &mut Option<Secret>, ctx: &Context) {
-        let ApiPerfsComponent { mut open, mut buf } = self.clone();
+pub trait ApiPerfsWindow {
+    fn draw_api_perfs_window(&mut self, ctx: &Context);
+    fn open_api_perfs_window(&mut self);
+    fn enable_submit(&self) -> bool;
+}
+
+impl ApiPerfsWindow for App {
+    fn draw_api_perfs_window(&mut self, ctx: &Context) {
+        let ApiPerfsData { mut open, mut buf } = self.api_perfs.clone();
         Window::new("API Preferences")
             .open(&mut open)
             .show(ctx, |ui| {
@@ -18,30 +25,30 @@ impl ApiPerfsComponent {
                 ui.separator();
                 ui.add_enabled_ui(self.enable_submit(), |ui| {
                     if ui.button("Submit").clicked() {
-                        *api_data = Some(Secret::Unencrypted(Key(buf.to_owned())));
-                        self.open = false;
+                        self.hcloud_api_secret = Some(Secret::Unencrypted(Key(buf.to_owned())));
+                        self.api_perfs.open = false;
                     }
                 })
             });
 
         //FIXME: weird handling of window internal closing
         if !open {
-            self.open = open;
+            self.api_perfs.open = open;
         }
 
-        self.buf = buf;
+        self.api_perfs.buf = buf;
     }
-    pub fn open(&mut self, api_key: &Option<Secret>) {
-        if !self.open {
-            self.buf = match api_key {
-                Some(Secret::Unencrypted(Key(token))) => token.to_owned(),
+    fn open_api_perfs_window(&mut self) {
+        if !self.api_perfs.open {
+            self.api_perfs.buf = match self.hcloud_api_secret.clone() {
+                Some(Secret::Unencrypted(Key(token))) => token,
                 _ => Default::default(),
             };
-            self.open = true;
+            self.api_perfs.open = true;
         }
     }
 
     fn enable_submit(&self) -> bool {
-        !self.buf.is_empty()
+        !self.api_perfs.buf.is_empty()
     }
 }

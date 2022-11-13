@@ -1,55 +1,50 @@
-use crate::{
-    api,
-    utils::{RemoteData, Secret},
-};
+use super::App;
+use crate::{api::ApiAccess, utils::Secret};
 use egui::{Context, CursorIcon, TopBottomPanel, Ui};
-use std::sync::mpsc::Sender;
 
-pub fn status_bar(
-    application_list: &mut Option<RemoteData>,
-    loading: &mut bool,
-    secret: &Option<Secret>,
-    tx: &Sender<RemoteData>,
-    ctx: &Context,
-) {
-    TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
-        let last_updated = match application_list {
-            None => "Never".to_string(),
-            Some(remote) => remote.updated_at.to_string(),
-        };
-
-        ui.horizontal(|ui| {
-            button(ui, secret, loading, tx, ctx);
-            ui.label(format!("Last updated: {}", last_updated));
-        });
-    });
+pub trait StatusBar {
+    fn draw_status_bar(&mut self, ctx: Context);
+    fn button(&mut self, ctx: &Context, ui: &mut Ui);
 }
+impl StatusBar for App {
+    fn draw_status_bar(&mut self, ctx: Context) {
+        TopBottomPanel::bottom("status_bar").show(&ctx, |ui| {
+            let last_updated = match self.application_list.clone() {
+                None => "Never".to_string(),
+                Some(remote) => remote.updated_at.to_string(),
+            };
 
-fn button(
-    ui: &mut Ui,
-    secret: &Option<Secret>,
-    loading: &mut bool,
-    tx: &Sender<RemoteData>,
-    ctx: &Context,
-) {
-    match (*loading, secret) {
-        (true, _) => {
-            ui.spinner().on_hover_cursor(CursorIcon::Wait);
-        }
-        (_, Some(Secret::Unencrypted(key))) => {
-            if ui
-                .button("⟳")
-                .on_hover_text("Refresh Server List")
-                .clicked()
-            {
-                *loading = true;
-                api::req_application_list(key.clone(), tx.clone(), ctx.clone());
-            }
-        }
-        _ => {
-            ui.add_enabled_ui(false, |ui| {
-                ui.button("🚫").on_disabled_hover_text("No API Configured");
+            ui.horizontal(|ui| {
+                self.button(&ctx, ui);
+                ui.label(format!("Last updated: {}", last_updated));
             });
+        });
+    }
+
+    fn button(&mut self, ctx: &Context, ui: &mut Ui) {
+        let Self {
+            hcloud_api_secret, ..
+        } = self;
+
+        match (self.remote_loading, hcloud_api_secret) {
+            (true, _) => {
+                ui.spinner().on_hover_cursor(CursorIcon::Wait);
+            }
+            (_, Some(Secret::Unencrypted(_))) => {
+                if ui
+                    .button("⟳")
+                    .on_hover_text("Refresh Server List")
+                    .clicked()
+                {
+                    self.remote_loading = true;
+                    self.req_application_list(ctx.clone());
+                }
+            }
+            _ => {
+                ui.add_enabled_ui(false, |ui| {
+                    ui.button("🚫").on_disabled_hover_text("No API Configured");
+                });
+            }
         }
     }
 }
