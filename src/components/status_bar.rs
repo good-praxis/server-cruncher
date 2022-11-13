@@ -4,7 +4,7 @@ use egui::{Context, CursorIcon, TopBottomPanel, Ui};
 
 pub trait StatusBar {
     fn draw_status_bar(&mut self, ctx: Context);
-    fn button(&mut self, ctx: &Context, ui: &mut Ui);
+    fn _button(&mut self, ctx: &Context, ui: &mut Ui);
 }
 impl StatusBar for App {
     fn draw_status_bar(&mut self, ctx: Context) {
@@ -15,13 +15,13 @@ impl StatusBar for App {
             };
 
             ui.horizontal(|ui| {
-                self.button(&ctx, ui);
+                self._button(&ctx, ui);
                 ui.label(format!("Last updated: {}", last_updated));
             });
         });
     }
 
-    fn button(&mut self, ctx: &Context, ui: &mut Ui) {
+    fn _button(&mut self, ctx: &Context, ui: &mut Ui) {
         let Self {
             hcloud_api_secret, ..
         } = self;

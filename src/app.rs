@@ -1,5 +1,5 @@
 use crate::{
-    components::{self, ApiPerfsData, ApiPerfsWindow, StatusBar},
+    components::*,
     utils::{Data, Error, RemoteData, Secret},
 };
 use serde_encrypt::{shared_key::SharedKey, AsSharedKey};
@@ -25,10 +25,10 @@ pub struct ServerCruncherApp {
     pub remote_loading: bool,
 
     #[serde(skip)] // Skip error log
-    error_log: Vec<Error>,
+    pub error_log: Vec<Error>,
 
     #[serde(skip)]
-    show_error_log: bool,
+    pub show_error_log: bool,
     #[serde(skip)]
     pub api_perfs: ApiPerfsData,
 }
@@ -125,22 +125,13 @@ impl eframe::App for ServerCruncherApp {
         }
 
         self.draw_status_bar(ctx.clone());
-
-        components::error_window(&mut self.error_log, &mut self.show_error_log, ctx);
+        self.draw_error_window(ctx);
         self.draw_api_perfs_window(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
 
-            if let Some(RemoteData {
-                data: Data::Application(applications),
-                ..
-            }) = &self.application_list
-            {
-                for application in applications {
-                    components::application_window(application, ctx);
-                }
-            }
+            self.draw_application_windows(ctx);
             ctx.request_repaint_after(Duration::new(1, 0));
             egui::warn_if_debug_build(ui);
         });

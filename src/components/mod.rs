@@ -8,7 +8,7 @@ mod api_prefs_window;
 pub use api_prefs_window::{ApiPerfsData, ApiPerfsWindow};
 
 mod error_window;
-pub use error_window::error_window;
+pub use error_window::ErrorWindow;
 
 mod application_window;
-pub use application_window::application_window;
+pub use application_window::ApplicationWindow;

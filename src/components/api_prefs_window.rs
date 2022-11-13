@@ -11,7 +11,7 @@ pub struct ApiPerfsData {
 pub trait ApiPerfsWindow {
     fn draw_api_perfs_window(&mut self, ctx: &Context);
     fn open_api_perfs_window(&mut self);
-    fn enable_submit(&self) -> bool;
+    fn _enable_submit(&self) -> bool;
 }
 
 impl ApiPerfsWindow for App {
@@ -23,7 +23,7 @@ impl ApiPerfsWindow for App {
                 ui.label("HCloud API Key"); // TODO: Add info about how tokens are stored
                 ui.add(TextEdit::singleline(&mut buf).password(true));
                 ui.separator();
-                ui.add_enabled_ui(self.enable_submit(), |ui| {
+                ui.add_enabled_ui(self._enable_submit(), |ui| {
                     if ui.button("Submit").clicked() {
                         self.hcloud_api_secret = Some(Secret::Unencrypted(Key(buf.to_owned())));
                         self.api_perfs.open = false;
@@ -48,7 +48,7 @@ impl ApiPerfsWindow for App {
         }
     }
 
-    fn enable_submit(&self) -> bool {
+    fn _enable_submit(&self) -> bool {
         !self.api_perfs.buf.is_empty()
     }
 }
