@@ -124,7 +124,7 @@ impl eframe::App for ServerCruncherApp {
             }
         }
 
-        self.draw_status_bar(ctx.clone());
+        self.draw_status_bar(ctx);
         self.draw_error_window(ctx);
         self.draw_api_perfs_window(ctx);
 

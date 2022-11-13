@@ -3,19 +3,19 @@ use crate::{api::ApiAccess, utils::Secret};
 use egui::{Context, CursorIcon, TopBottomPanel, Ui};
 
 pub trait StatusBar {
-    fn draw_status_bar(&mut self, ctx: Context);
+    fn draw_status_bar(&mut self, ctx: &Context);
     fn _button(&mut self, ctx: &Context, ui: &mut Ui);
 }
 impl StatusBar for App {
-    fn draw_status_bar(&mut self, ctx: Context) {
-        TopBottomPanel::bottom("status_bar").show(&ctx, |ui| {
+    fn draw_status_bar(&mut self, ctx: &Context) {
+        TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
             let last_updated = match self.application_list.clone() {
                 None => "Never".to_string(),
                 Some(remote) => remote.updated_at.to_string(),
             };
 
             ui.horizontal(|ui| {
-                self._button(&ctx, ui);
+                self._button(ctx, ui);
                 ui.label(format!("Last updated: {}", last_updated));
             });
         });
