@@ -2,9 +2,12 @@ mod api;
 mod components;
 
 use crate::utils::{Data, Error, RemoteData, Secret};
+use api::Endpoints;
 use components::*;
+use serde::{Deserialize, Serialize};
 use serde_encrypt::{shared_key::SharedKey, AsSharedKey};
 use std::{
+    collections::HashSet,
     sync::mpsc::{Receiver, Sender},
     time::Duration,
 };
@@ -12,7 +15,7 @@ use std::{
 pub(crate) type App = ServerCruncherApp;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct ServerCruncherApp {
     #[serde(skip)]
@@ -22,11 +25,12 @@ pub struct ServerCruncherApp {
 
     local_key: SharedKey,
 
+    endpoint: Endpoints,
     hcloud_api_secret: Option<Secret>,
     application_list: Option<RemoteData>,
 
     #[serde(skip)] // Always skip UI Indicators
-    remote_loading: bool,
+    remote_loading: HashSet<String>,
 
     #[serde(skip)] // Skip error log
     error_log: Vec<Error>,
@@ -45,9 +49,10 @@ impl Default for ServerCruncherApp {
             tx,
             rx,
             local_key: AsSharedKey::generate(),
+            endpoint: Endpoints::Unconfigured,
             hcloud_api_secret: None,
             application_list: None,
-            remote_loading: false,
+            remote_loading: HashSet::new(),
             error_log: Vec::new(),
             show_error_log: false,
             api_perfs: Default::default(),
@@ -70,6 +75,7 @@ impl ServerCruncherApp {
             // Unencrypt api key
             if let Some(secret) = loaded_app.hcloud_api_secret {
                 loaded_app.hcloud_api_secret = Some(secret.decrypt(&loaded_app.local_key));
+                loaded_app.endpoint = Endpoints::Hcloud;
             }
             return loaded_app;
         }
@@ -112,20 +118,7 @@ impl eframe::App for ServerCruncherApp {
         });
 
         if let Ok(remote) = self.rx.try_recv() {
-            match remote.data {
-                Data::Application(_) => {
-                    self.application_list = Some(remote);
-                    self.remote_loading = false
-                }
-                Data::Error(e) => {
-                    self.error_log.push(Error {
-                        error: e,
-                        ts: remote.updated_at,
-                    });
-                    self.remote_loading = false;
-                    self.show_error_log = true;
-                }
-            }
+            self.handle_incoming_remote(remote);
         }
 
         self.draw_status_bar(ctx);
@@ -139,5 +132,79 @@ impl eframe::App for ServerCruncherApp {
             ctx.request_repaint_after(Duration::new(1, 0));
             egui::warn_if_debug_build(ui);
         });
+    }
+}
+
+impl App {
+    pub fn set_loading(&mut self, origin: &str) {
+        self.remote_loading.insert(origin.to_string());
+    }
+    pub fn unset_loading(&mut self, origin: &str) {
+        self.remote_loading.remove(origin);
+    }
+    fn handle_incoming_remote(&mut self, remote: RemoteData) {
+        match remote.data {
+            Data::Application(_) => {
+                self.unset_loading(&remote.origin);
+                self.application_list = Some(remote);
+            }
+            Data::Error(e) => {
+                self.error_log.push(Error {
+                    error: e,
+                    ts: remote.updated_at,
+                });
+                self.unset_loading(&remote.origin);
+                self.show_error_log = true;
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::App;
+    use crate::utils::{Data, RemoteData};
+
+    #[test]
+    fn set_loading() {
+        const ORIGIN: &str = "loading";
+        let mut app = App::default();
+        assert!(app.remote_loading.is_empty());
+        app.set_loading(ORIGIN);
+        assert!(app.remote_loading.contains(ORIGIN));
+    }
+
+    #[test]
+    fn unset_loading() {
+        const FIRST_ORIGIN: &str = "loading";
+        const SECOND_ORIGIN: &str = "not loading";
+        let mut app = App::default();
+        assert!(app.remote_loading.is_empty());
+        app.set_loading(FIRST_ORIGIN);
+        app.set_loading(SECOND_ORIGIN);
+        app.unset_loading(SECOND_ORIGIN);
+
+        assert!(app.remote_loading.contains(FIRST_ORIGIN));
+        assert!(!app.remote_loading.contains(SECOND_ORIGIN));
+    }
+
+    #[test]
+    fn handle_incoming_remote() {
+        const ORIGIN: &str = "loading";
+        const ERROR: &str = "oopsie";
+        let mut app = App::default();
+        app.set_loading(ORIGIN);
+        assert!(app.application_list.is_none());
+
+        let remote_application = RemoteData::new(Data::Application(vec![]), ORIGIN);
+        app.handle_incoming_remote(remote_application);
+        assert!(app.application_list.is_some());
+        assert!(!app.remote_loading.contains(ORIGIN));
+
+        let remote_error = RemoteData::new(Data::Error(ERROR.to_string()), ORIGIN);
+        assert!(app.error_log.is_empty());
+        app.handle_incoming_remote(remote_error);
+        assert!(!app.error_log.is_empty());
+        assert_eq!(app.error_log[0].error, ERROR);
     }
 }

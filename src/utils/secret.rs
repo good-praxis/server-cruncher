@@ -1,15 +1,24 @@
+use serde::{Deserialize, Serialize};
 use serde_encrypt::{
     serialize::impls::BincodeSerializer, shared_key::SharedKey, traits::SerdeEncryptSharedKey,
     EncryptedMessage, Error,
 };
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Key(pub String);
 impl SerdeEncryptSharedKey for Key {
     type S = BincodeSerializer<Self>;
 }
+impl From<Secret> for Key {
+    fn from(value: Secret) -> Self {
+        match value {
+            Secret::Encrypted(_) => Self::default(),
+            Secret::Unencrypted(key) => key,
+        }
+    }
+}
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Secret {
     Unencrypted(Key),
     Encrypted(Vec<u8>),

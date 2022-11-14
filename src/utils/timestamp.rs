@@ -9,6 +9,9 @@ impl Timestamp {
     pub fn new(utc: DateTime<Utc>) -> Self {
         Self { utc }
     }
+    pub fn now() -> Self {
+        Self::new(Utc::now())
+    }
     pub fn get_smh(&self, dt: &DateTime<Utc>) -> (i64, i64, i64) {
         let diff = dt.timestamp() - self.utc.timestamp();
         let s = diff % 60;

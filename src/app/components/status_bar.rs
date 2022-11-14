@@ -2,6 +2,8 @@ use super::App;
 use crate::utils::Secret;
 use egui::{Context, CursorIcon, TopBottomPanel, Ui};
 
+const API_ORIGIN: &str = "status_bar";
+
 impl App {
     pub fn draw_status_bar(&mut self, ctx: &Context) {
         TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
@@ -22,7 +24,7 @@ impl App {
             hcloud_api_secret, ..
         } = self;
 
-        match (self.remote_loading, hcloud_api_secret) {
+        match (self.remote_loading.contains(API_ORIGIN), hcloud_api_secret) {
             (true, _) => {
                 ui.spinner().on_hover_cursor(CursorIcon::Wait);
             }
@@ -32,8 +34,8 @@ impl App {
                     .on_hover_text("Refresh Server List")
                     .clicked()
                 {
-                    self.remote_loading = true;
-                    self.req_application_list(ctx.clone());
+                    self.remote_loading.insert(API_ORIGIN.to_string());
+                    self.req_application_list(API_ORIGIN, ctx);
                 }
             }
             _ => {

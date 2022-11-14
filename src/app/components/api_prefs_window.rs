@@ -1,5 +1,8 @@
 use super::App;
-use crate::utils::{Key, Secret};
+use crate::{
+    app::api::Endpoints,
+    utils::{Key, Secret},
+};
 use egui::{Context, TextEdit, Window};
 
 #[derive(Default, Clone)]
@@ -47,6 +50,7 @@ impl App {
 
     fn submit(&mut self) {
         self.hcloud_api_secret = Some(Secret::Unencrypted(Key(self.api_perfs.buf.to_owned())));
+        self.endpoint = Endpoints::Hcloud;
         self.api_perfs.open = false;
     }
 }
