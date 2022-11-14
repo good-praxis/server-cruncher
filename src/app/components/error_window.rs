@@ -1,8 +1,7 @@
-use std::borrow::BorrowMut;
-
-use crate::app::App;
+use super::App;
 use crate::utils::Error;
 use egui::{Button, Color32, Context, RichText, ScrollArea, TextStyle, Ui, Window};
+use std::borrow::BorrowMut;
 
 impl App {
     pub fn draw_error_window(&mut self, ctx: &Context) {

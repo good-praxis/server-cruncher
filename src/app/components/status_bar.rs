@@ -1,4 +1,4 @@
-use crate::app::App;
+use super::App;
 use crate::utils::Secret;
 use egui::{Context, CursorIcon, TopBottomPanel, Ui};
 

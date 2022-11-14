@@ -1,4 +1,4 @@
-use crate::app::App;
+use super::App;
 use crate::utils::{Application, Data, RemoteData};
 use egui::{Context, Window};
 

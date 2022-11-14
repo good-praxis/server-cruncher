@@ -1,3 +1,5 @@
+pub(crate) use super::App;
+
 mod status_bar;
 
 mod api_prefs_window;
