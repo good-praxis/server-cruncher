@@ -51,10 +51,12 @@ jobs:
           toolchain: stable
           override: true
       - run: sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev
+      - name: Set mock flag
+        run: echo "RUSTFLAGS=--cfg mock" >> $GITHUB_ENV
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --lib
+          args: --lib 
 
   fmt:
     name: Rustfmt
@@ -97,6 +99,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Set mock flag
+        run: echo "RUSTFLAGS=--cfg mock" >> $GITHUB_ENV
 
       - name: Generate code coverage
         run: |
