@@ -2143,6 +2143,7 @@ dependencies = [
  "eframe",
  "egui",
  "hcloud",
+ "http",
  "lazy_static",
  "regex",
  "serde",

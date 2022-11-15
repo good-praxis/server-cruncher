@@ -20,6 +20,7 @@ lazy_static = "1.4"
 
 [dev-dependencies]
 regex = "1"
+http = "0.2"
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

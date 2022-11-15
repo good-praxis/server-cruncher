@@ -2,12 +2,13 @@ mod api;
 mod components;
 
 use crate::utils::{Data, Error, RemoteData, Secret};
-use api::Endpoints;
+use api::{Endpoint, Hetzner, Unconfigured};
 use components::*;
 use serde::{Deserialize, Serialize};
 use serde_encrypt::{shared_key::SharedKey, AsSharedKey};
 use std::{
     collections::HashSet,
+    rc::Rc,
     sync::mpsc::{Receiver, Sender},
     time::Duration,
 };
@@ -25,7 +26,8 @@ pub struct ServerCruncherApp {
 
     local_key: SharedKey,
 
-    endpoint: Endpoints,
+    #[serde(skip)]
+    endpoint: Rc<dyn Endpoint>,
     hcloud_api_secret: Option<Secret>,
     application_list: Option<RemoteData>,
 
@@ -49,7 +51,7 @@ impl Default for ServerCruncherApp {
             tx,
             rx,
             local_key: AsSharedKey::generate(),
-            endpoint: Endpoints::Unconfigured,
+            endpoint: Rc::new(Unconfigured),
             hcloud_api_secret: None,
             application_list: None,
             remote_loading: HashSet::new(),
@@ -75,7 +77,7 @@ impl ServerCruncherApp {
             // Unencrypt api key
             if let Some(secret) = loaded_app.hcloud_api_secret {
                 loaded_app.hcloud_api_secret = Some(secret.decrypt(&loaded_app.local_key));
-                loaded_app.endpoint = Endpoints::Hcloud;
+                loaded_app.endpoint = Rc::new(Hetzner);
             }
             return loaded_app;
         }

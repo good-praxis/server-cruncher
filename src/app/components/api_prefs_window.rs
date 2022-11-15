@@ -1,6 +1,8 @@
+use std::rc::Rc;
+
 use super::App;
 use crate::{
-    app::api::Endpoints,
+    app::api::Hetzner,
     utils::{Key, Secret},
 };
 use egui::{Context, TextEdit, Window};
@@ -50,7 +52,7 @@ impl App {
 
     fn submit(&mut self) {
         self.hcloud_api_secret = Some(Secret::Unencrypted(Key(self.api_perfs.buf.to_owned())));
-        self.endpoint = Endpoints::Hcloud;
+        self.endpoint = Rc::new(Hetzner);
         self.api_perfs.open = false;
     }
 }
