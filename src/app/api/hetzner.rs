@@ -10,7 +10,7 @@ use hcloud::apis::{images_api, servers_api};
 use hcloud::models::{ListImagesResponse, ListServersResponse};
 
 #[cfg(all(test, mock))]
-use test::{ImagesApiMock as images_api, ServersApiMock as servers_api};
+use test::{images_api, servers_api};
 
 pub struct Hetzner;
 impl Endpoint for Hetzner {
@@ -78,22 +78,16 @@ mod test {
     use crate::utils::Key;
 
     #[cfg(mock)]
-    use hcloud::{
-        apis::{
-            configuration::Configuration,
-            images_api::{ListImagesError, ListImagesParams},
-            servers_api::{ListServersError, ListServersParams},
-            Error,
-        },
-        models::{ListImagesResponse, ListServersResponse},
-    };
-    #[cfg(mock)]
-    use http::StatusCode;
-
-    #[cfg(mock)]
-    pub struct ServersApiMock;
-    #[cfg(mock)]
-    impl ServersApiMock {
+    pub mod servers_api {
+        use hcloud::{
+            apis::{
+                configuration::Configuration,
+                servers_api::{ListServersError, ListServersParams},
+                Error,
+            },
+            models::ListServersResponse,
+        };
+        use http::StatusCode;
         pub async fn list_servers(
             config: &Configuration,
             _params: ListServersParams,
@@ -110,9 +104,16 @@ mod test {
         }
     }
     #[cfg(mock)]
-    pub struct ImagesApiMock;
-    #[cfg(mock)]
-    impl ImagesApiMock {
+    pub mod images_api {
+        use hcloud::{
+            apis::{
+                configuration::Configuration,
+                images_api::{ListImagesError, ListImagesParams},
+                Error,
+            },
+            models::ListImagesResponse,
+        };
+        use http::StatusCode;
         pub async fn list_images(
             config: &Configuration,
             _params: ListImagesParams,
@@ -128,7 +129,6 @@ mod test {
             Ok(ListImagesResponse::default())
         }
     }
-
     #[cfg_attr(not(mock), ignore = "mocking is disabled")]
     #[tokio::test]
     async fn list_servers_mock() {
